@@ -51,5 +51,22 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(3),                                         // Example timeout, adjust as needed
     })
 
+    const addApplicant_fn = new lambdaNodejs.NodejsFunction(this, 'AddApplicantFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'addApplicant.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'addApplicant')),
+      environment: {
+        // Define your environment variables here
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,                                                          // Use the existing IAM role
+      vpc: vpc,     
+      securityGroups: [securityGroup],                                      // Associate the security group
+      timeout: Duration.seconds(3),                                         // Example timeout, adjust as needed
+    })
+
   }
 }

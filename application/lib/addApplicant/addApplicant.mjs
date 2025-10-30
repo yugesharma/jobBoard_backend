@@ -10,9 +10,11 @@ var pool=mysql.createPool({
 });
 
 export const handler=async (event)=> {
+  // console.log(event.request.userAttributes)
+  // return event;
   let code
   let result= await new Promise((resolve, reject) => {
-    const query='INSERT INTO recruitMe.Companies (compId,compName,compPassword) VALUES (?,?,?)'
+    const query='INSERT INTO recruitMe.Applicants (appId,appName,appPassword) VALUES (?,?,?)'
     const values=[event.request.userAttributes.sub, event.userName,null]
     pool.query(query,values,(error,rows)=> {
       if(error) {
