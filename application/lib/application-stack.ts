@@ -68,5 +68,39 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(3),                                         // Example timeout, adjust as needed
     })
 
+    
+
+    // 'REVIEW COMPANY' FUNCTION
+    const reviewCompanyProfile_fn = new lambdaNodejs.NodejsFunction(this, 'ReviewCompanyProfileFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'reviewCompanyProfile.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'reviewCompanyProfile')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    
+    const api = new apigw.RestApi(this, 'RecruitMeApi', {
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigw.Cors.ALL_ORIGINS, 
+        allowMethods: apigw.Cors.ALL_METHODS
+      }
+    });
+
+    
+    const companyResource = api.root.addResource('company');
+
+    
+    companyResource.addMethod('GET', new apigw.LambdaIntegration(reviewCompanyProfile_fn));
+
+    
   }
 }
