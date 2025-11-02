@@ -8,7 +8,6 @@ var pool = mysql.createPool({
      database: process.env.RDS_DATABASE,
 });
 
-
 function runQuery(query, params) {
      return new Promise((resolve, reject) => {
           pool.query(query, params, (error, rows) => {
@@ -35,15 +34,15 @@ export const handler = async (event) => {
           
           const [inactiveJobs, activeJobs, closedJobs] = await Promise.all([
                runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE compId = ? AND isActive = 0 AND isClosed = 0',
+                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isActive = 0 AND isClosed = 0',
                     [compId]
                ),
                runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE compId = ? AND isActive = 1',
+                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isActive = 1',
                     [compId]
                ),
                runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE compId = ? AND isClosed = 1',
+                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isClosed = 1',
                     [compId]
                ),
           ]);

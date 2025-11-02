@@ -8,6 +8,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import { Duration } from 'aws-cdk-lib'
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as dotenv from 'dotenv';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 dotenv.config();
 
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -95,11 +96,18 @@ export class ApplicationStack extends cdk.Stack {
       }
     });
 
-    
+    const companyAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'CompanyAuthorizer', {
+      cognitoUserPools: [
+        cognito.UserPool.fromUserPoolId(this, 'Company', 'us-east-2_hh9ybuZoy') 
+      ]
+    });
+
     const companyResource = api.root.addResource('company');
 
-    
-    companyResource.addMethod('GET', new apigw.LambdaIntegration(reviewCompanyProfile_fn));
+    companyResource.addMethod('GET', new apigw.LambdaIntegration(reviewCompanyProfile_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
 
     
   }
