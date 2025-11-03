@@ -35,14 +35,18 @@ let insertSkill = (skill, jobID) => {
 
 
 export const handler=async (event)=> { 
+  
   let result
   let code
   try {
-    const newJobID = await insertJob(event.jobName, event.compID)
-    for (const skill of event.skills) {
+    const body = typeof event.body === 'string' ? JSON.parse(event.body) : event;
+    console.log("body:", body.jobName);
+    const newJobID = await insertJob(body.jobName, body.compID)
+    for (const skill of body.skills) {
       const newJobSkill = await insertSkill(skill, newJobID.toString())//how is it getting stored in the database if I have to call toString here?
     }
     code = 200
+    result={message:"Job created successfully", jobID:newJobID}
   } catch (error) {
     code = 400
     result = error.message
@@ -50,6 +54,12 @@ export const handler=async (event)=> {
 
   const response={
     statusCode:code,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",       
+      "Access-Control-Allow-Headers": "*",     
+      "Access-Control-Allow-Methods": "OPTIONS,POST,GET"  
+  },
     body:JSON.stringify(result)
   }
   return response

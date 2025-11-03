@@ -110,7 +110,8 @@ export class ApplicationStack extends cdk.Stack {
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
         allowOrigins: apigw.Cors.ALL_ORIGINS, 
-        allowMethods: apigw.Cors.ALL_METHODS
+        allowMethods: apigw.Cors.ALL_METHODS,
+        allowHeaders: ['Content-Type', 'Authorization'],
       }
     });
 
