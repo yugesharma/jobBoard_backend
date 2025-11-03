@@ -9,6 +9,7 @@ import { Duration } from 'aws-cdk-lib'
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as dotenv from 'dotenv';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { create } from 'node:domain';
 dotenv.config();
 
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -88,6 +89,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'CREATE JOB' FUNCTION
+    const createJob_fn = new lambdaNodejs.NodejsFunction(this, 'CreateJobFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'createJob.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'createJob')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -109,6 +127,11 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
-    
+    //CREATE JOB API
+    const createJobResource = companyResource.addResource('create_job');
+    createJobResource.addMethod('POST', new apigw.LambdaIntegration(createJob_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
   }
 }
