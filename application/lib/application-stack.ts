@@ -123,6 +123,62 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'EDIT JOB' FUNCTION
+    const editJob_fn = new lambdaNodejs.NodejsFunction(this, 'EditJobFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'editJob.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'editJob')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    // 'GET JOB BY ID' FUNCTION
+    const getJobById_fn = new lambdaNodejs.NodejsFunction(this, 'GetJobByIdFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'getJobById.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'getJobById')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    // 'EDIT COMPANY PROFILE' FUNCTION
+    const editCompanyProfile_fn = new lambdaNodejs.NodejsFunction(this, 'EditCompanyProfileFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'editCompanyProfile.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'editCompanyProfile')), 
+    // 'EDIT APPLICANT PROFILE' FUNCTION
+    const editApplicantProfile_fn = new lambdaNodejs.NodejsFunction(this, 'EditApplicantProfileFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'editApplicantProfile.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'editApplicantProfile')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -144,10 +200,38 @@ export class ApplicationStack extends cdk.Stack {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
+    
 
     //CREATE JOB API
     const createJobResource = companyResource.addResource('create_job');
     createJobResource.addMethod('POST', new apigw.LambdaIntegration(createJob_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    const applicantAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'ApplicantAuthorizer', {
+      cognitoUserPools: [
+        cognito.UserPool.fromUserPoolId(this, 'Applicant', 'us-east-2_87wvNq12q') 
+      ]
+    });
+
+    const applicantResource = api.root.addResource('applicant');
+
+    applicantResource.addMethod('GET', new apigw.LambdaIntegration(reviewApplicantProfile_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //EDIT JOB API
+    const editJobResource = companyResource.addResource('edit_job');
+    editJobResource.addMethod('POST', new apigw.LambdaIntegration(editJob_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //GET JOB BY ID API
+    const getJobByIdResource = companyResource.addResource('get_job_by_id');
+    getJobByIdResource.addMethod('POST', new apigw.LambdaIntegration(getJobById_fn), {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
