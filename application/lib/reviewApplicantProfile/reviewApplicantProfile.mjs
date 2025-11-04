@@ -8,7 +8,6 @@ var pool = mysql.createPool({
      database: process.env.RDS_DATABASE,
 });
 
-
 function runQuery(query, params) {
      return new Promise((resolve, reject) => {
           pool.query(query, params, (error, rows) => {
@@ -21,12 +20,14 @@ function runQuery(query, params) {
      });
 }
 
-
 function getJobsByStatus(appId, status) {
      const query = `
-          SELECT J.* FROM recruitMe.Jobs J
-          JOIN recruitMe.JobApplications JA ON J.jobId = JA.jobId
-          WHERE JA.appId = ? AND JA.status = ?
+          SELECT J.jobId, J.jobName, GROUP_CONCAT(JS.jobSkill) as skillsNeeded
+          FROM recruitMe.Jobs J
+          JOIN recruitMe.JobApplication JA ON J.jobId = JA.jobApp_jobId_FK
+          LEFT JOIN recruitMe.JobSkills JS ON J.jobId = JS.jobSkill_jobId_FK
+          WHERE JA.jobApp_appId_FK = ? AND JA.status = ?
+          GROUP BY J.jobId, J.jobName
      `;
      return runQuery(query, [appId, status]);
 }
@@ -52,31 +53,36 @@ export const handler = async (event) => {
                [appId]
           );
 
-          
-          const [appliedJobs, offeredJobs, acceptedJobs, rejectedJobs] =
-               await Promise.all([
-                    getJobsByStatus(appId, 'applied'),
-                    getJobsByStatus(appId, 'offered'),
-                    getJobsByStatus(appId, 'accepted'),
-                    getJobsByStatus(appId, 'rejected'),
-               ]);
+          if (!applicantDetails || applicantDetails.length === 0) {
+               throw new Error('No applicant found with that ID');
+          }
 
+          const applicant = applicantDetails[0];
           
+          const skillsArray = applicantSkills.map((skill) => skill.appSkill);
+          
+          const formatJobs = (jobs) => {
+               return jobs.map(job => ({
+                    ...job,
+                    skillsNeeded: job.skillsNeeded ? job.skillsNeeded.split(',') : []
+               }));
+          }
+
           const applicantProfile = {
-               ...applicantDetails[0], 
-               skills: applicantDetails[0].skills.split(','), 
-               offeredJobs,
-               acceptedJobs,
-               rejectedJobs,
+               appName: applicant.appName,
+               skills: skillsArray,
+               appliedJobs: formatJobs(appliedJobs),
+               offeredJobs: formatJobs(offeredJobs),
+               acceptedJobs: formatJobs(acceptedJobs),
+               rejectedJobs: formatJobs(rejectedJobs),
           };
 
           body = applicantProfile;
      } catch (e) {
-          code = 400;
+          code = 400; 
           body = { error: e.message };
      }
 
-     
      const response = {
           statusCode: code,
           headers: {
