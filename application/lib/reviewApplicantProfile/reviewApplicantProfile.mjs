@@ -59,8 +59,14 @@ export const handler = async (event) => {
 
           const applicant = applicantDetails[0];
           
+          const applicantSkills = await runQuery(
+               'SELECT s.appSkill FROM Applicants a LEFT JOIN ApplicantSkills s ON a.appId = s.appSkill_appId_FK WHERE a.appId = ?',
+               [appId]
+          );
           const skillsArray = applicantSkills.map((skill) => skill.appSkill);
           
+
+
           const formatJobs = (jobs) => {
                return jobs.map(job => ({
                     ...job,
@@ -68,6 +74,10 @@ export const handler = async (event) => {
                }));
           }
 
+          const appliedJobs = await runQuery ('SELECT j.jobName, js.jobSkill AS skills FROM JobApplication ja JOIN Jobs j ON ja.jobApp_jobId_FK = j.jobId JOIN JobSkills js  ON js.jobSkill_jobId_FK = j.jobId WHERE ja.jobApp_appId_FK = ? AND ja.offered = 0 AND ja.hired = 0 AND ja.rejectedByApplicant = 0 GROUP BY j.jobName;',[appId])
+          const offeredJobs=await runQuery('SELECT j.jobName, js.jobSkill FROM JobApplication ja JOIN Jobs j ON ja.jobApp_jobId_FK = j.jobId JOIN JobSkills js ON js.jobSkill_jobId_FK = j.jobId WHERE ja.jobApp_appId_FK = ? AND ja.offered = 1;',[appId])
+          const rejectedJobs=await runQuery('SELECT j.jobName, js.jobSkill FROM JobApplication ja JOIN Jobs j ON ja.jobApp_jobId_FK = j.jobId JOIN JobSkills js ON js.jobSkill_jobId_FK = j.jobId WHERE ja.jobApp_appId_FK = ? AND ja.rejectedByApplicant = 1;',[appId])
+          const acceptedJobs=await runQuery('SELECT j.jobName, js.jobSkill FROM JobApplication ja JOIN Jobs j ON ja.jobApp_jobId_FK = j.jobId JOIN JobSkills js ON js.jobSkill_jobId_FK = j.jobId WHERE ja.jobApp_appId_FK = ? AND ja.hired = 1;',[appId])
           const applicantProfile = {
                appName: applicant.appName,
                skills: skillsArray,
