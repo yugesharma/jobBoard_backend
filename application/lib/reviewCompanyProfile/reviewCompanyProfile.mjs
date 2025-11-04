@@ -65,6 +65,7 @@ export const handler = async (event) => {
           headers: {
                'Access-Control-Allow-Origin': '*', 
                'Access-Control-Allow-Headers': '*',
+               'Access-Control-Allow-Headers': 'Content-Type,Authorization',
           },
           body: JSON.stringify(body),
      };

@@ -32,19 +32,23 @@ function getJobsByStatus(appId, status) {
 }
 
 export const handler = async (event) => {
+     console.log(event);
      let code = 200;
      let body;
 
      try {
           
-          const appId = event.queryStringParameters.appId;
+          const appId = event.queryStringParameters?.appId 
+           || (event.queryStringParameters ? event.queryStringParameters.appId : undefined)
+           || event.appId
+           || JSON.parse(event.body || '{}').appId;
           if (!appId) {
                throw new Error('Applicant ID is required');
           }
 
          
           const applicantDetails = await runQuery(
-               'SELECT appName, skills FROM recruitMe.Applicants WHERE appId = ?',
+               'SELECT * FROM recruitMe.Applicants WHERE appId = ?',
                [appId]
           );
 
@@ -76,8 +80,9 @@ export const handler = async (event) => {
      const response = {
           statusCode: code,
           headers: {
-               'Access-Control-Allow-Origin': '*', 
-               'Access-Control-Allow-Headers': '*',
+               "Access-Control-Allow-Origin": "*",
+               "Access-Control-Allow-Headers": "Content-Type,Authorization",
+               "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
           },
           body: JSON.stringify(body),
      };
