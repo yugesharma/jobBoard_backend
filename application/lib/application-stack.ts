@@ -89,6 +89,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+      // 'REVIEW APPLICANT' FUNCTION
+    const reviewApplicantProfile_fn = new lambdaNodejs.NodejsFunction(this, 'ReviewApplicantProfileFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'reviewApplicantProfile.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'reviewApplicantProfile')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // 'CREATE JOB' FUNCTION
     const createJob_fn = new lambdaNodejs.NodejsFunction(this, 'CreateJobFunction', {
       runtime: lambda.Runtime.NODEJS_22_X,
