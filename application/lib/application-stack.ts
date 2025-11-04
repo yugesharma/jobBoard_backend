@@ -162,6 +162,11 @@ export class ApplicationStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'editCompanyProfile.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, 'editCompanyProfile')), 
+    // 'EDIT APPLICANT PROFILE' FUNCTION
+    const editApplicantProfile_fn = new lambdaNodejs.NodejsFunction(this, 'EditApplicantProfileFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'editApplicantProfile.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'editApplicantProfile')), 
       environment: {
         RDS_USER: process.env.RDS_USER!,
         RDS_PASSWORD: process.env.RDS_PASSWORD!,
