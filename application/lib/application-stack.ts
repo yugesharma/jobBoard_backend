@@ -195,11 +195,25 @@ export class ApplicationStack extends cdk.Stack {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
+    
 
     //CREATE JOB API
     const createJobResource = companyResource.addResource('create_job');
     createJobResource.addMethod('POST', new apigw.LambdaIntegration(createJob_fn), {
       authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    const applicantAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'ApplicantAuthorizer', {
+      cognitoUserPools: [
+        cognito.UserPool.fromUserPoolId(this, 'Applicant', 'us-east-2_87wvNq12q') 
+      ]
+    });
+
+    const applicantResource = api.root.addResource('applicant');
+
+    applicantResource.addMethod('GET', new apigw.LambdaIntegration(reviewApplicantProfile_fn), {
+      authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
