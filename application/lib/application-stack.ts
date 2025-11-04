@@ -157,6 +157,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'EDIT APPLICANT PROFILE' FUNCTION
+    const editApplicantProfile_fn = new lambdaNodejs.NodejsFunction(this, 'EditApplicantProfileFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'editApplicantProfile.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'editApplicantProfile')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
