@@ -157,6 +157,11 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'EDIT COMPANY PROFILE' FUNCTION
+    const editCompanyProfile_fn = new lambdaNodejs.NodejsFunction(this, 'EditCompanyProfileFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'editCompanyProfile.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'editCompanyProfile')), 
     // 'EDIT APPLICANT PROFILE' FUNCTION
     const editApplicantProfile_fn = new lambdaNodejs.NodejsFunction(this, 'EditApplicantProfileFunction', {
       runtime: lambda.Runtime.NODEJS_22_X,
