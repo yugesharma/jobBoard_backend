@@ -162,6 +162,18 @@ export class ApplicationStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'editCompanyProfile.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, 'editCompanyProfile')), 
+       environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // 'EDIT APPLICANT PROFILE' FUNCTION
     const editApplicantProfile_fn = new lambdaNodejs.NodejsFunction(this, 'EditApplicantProfileFunction', {
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -226,6 +238,13 @@ export class ApplicationStack extends cdk.Stack {
     const editJobResource = companyResource.addResource('edit_job');
     editJobResource.addMethod('POST', new apigw.LambdaIntegration(editJob_fn), {
       authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //EDIT APPLICANT API
+    const editApplicantResource = applicantResource.addResource('edit_applicant');
+    editApplicantResource.addMethod('POST', new apigw.LambdaIntegration(editApplicantProfile_fn), {
+      authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
