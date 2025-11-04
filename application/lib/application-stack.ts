@@ -248,10 +248,10 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
-      //EDIT APPLICANT API
-    const editCompanyResource = applicantResource.addResource('edit_company');
+      //EDIT COMPANY API
+    const editCompanyResource = companyResource.addResource('edit_company');
     editCompanyResource.addMethod('POST', new apigw.LambdaIntegration(editCompanyProfile_fn), {
-      authorizer: applicantAuthorizer,
+      authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
