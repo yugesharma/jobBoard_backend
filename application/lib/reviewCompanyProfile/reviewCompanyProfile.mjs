@@ -69,6 +69,7 @@ export const handler = async (event) => {
           },
           body: JSON.stringify(body),
      };
+     console.log(body);
 
      return response;
 };

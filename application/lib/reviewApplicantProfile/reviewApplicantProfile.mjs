@@ -33,7 +33,6 @@ function getJobsByStatus(appId, status) {
 }
 
 export const handler = async (event) => {
-     console.log(event);
      let code = 200;
      let body;
 
@@ -102,6 +101,7 @@ export const handler = async (event) => {
           },
           body: JSON.stringify(body),
      };
+     console.log(body);
 
      return response;
 };
