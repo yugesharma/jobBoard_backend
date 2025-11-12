@@ -297,14 +297,14 @@ export class ApplicationStack extends cdk.Stack {
     });
 
     //SEARCH JOBS BY COMPANY API
-    const searchJobsByCompanyResource = companyResource.addResource('search_jobs_by_company');
+    const searchJobsByCompanyResource = applicantResource.addResource('search_jobs_by_company');
     searchJobsByCompanyResource.addMethod('POST', new apigw.LambdaIntegration(searchJobsByCompany_fn), {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
     //SEARCH JOBS BY SKILL API
-    const searchJobsBySkillResource = companyResource.addResource('search_jobs_by_skill');
+    const searchJobsBySkillResource = applicantResource.addResource('search_jobs_by_skill');
     searchJobsBySkillResource.addMethod('POST', new apigw.LambdaIntegration(searchJobsBySkill_fn), {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
