@@ -29,7 +29,7 @@ export const handler = async (event) => {
           const Companies = await Promise.all([
                runQuery(
                     'SELECT * FROM recruitMe.Companies',
-                    [NULL]
+                    []
                )
           ]);
           
