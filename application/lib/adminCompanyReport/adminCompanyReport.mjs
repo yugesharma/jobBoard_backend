@@ -26,34 +26,18 @@ export const handler = async (event) => {
 
      try {
           
-          const compId = event.queryStringParameters.compId;
-          if (!compId) {
-               throw new Error('Company ID is required');
-          }
-
-          
-          const [inactiveJobs, activeJobs, closedJobs] = await Promise.all([
+          const Companies = await Promise.all([
                runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isActive = 0 AND isClosed = 0',
-                    [compId]
-               ),
-               runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isActive = 1 AND isClosed = 0',
-                    [compId]
-               ),
-               runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isActive = 0 AND isClosed = 1',
-                    [compId]
-               ),
+                    'SELECT * FROM recruitMe.Companies',
+                    []
+               )
           ]);
-
           
           body = {
-               
-               inactiveJobs: inactiveJobs,
-               activeJobs: activeJobs,
-               closedJobs: closedJobs,
+               companies: Companies,
           };
+          
+          console.log(body);
      } catch (e) {
           code = 400;
           body = { error: e.message };

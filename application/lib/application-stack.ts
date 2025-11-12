@@ -225,6 +225,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'ADMIN COMPANY REPORT' FUNCTION
+    const adminCompanyReport_fn = new lambdaNodejs.NodejsFunction(this, 'AdminCompanyReportFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'adminCompanyReport.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'adminCompanyReport')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -248,13 +265,6 @@ export class ApplicationStack extends cdk.Stack {
     });
     
 
-    //CREATE JOB API
-    const createJobResource = companyResource.addResource('create_job');
-    createJobResource.addMethod('POST', new apigw.LambdaIntegration(createJob_fn), {
-      authorizer: companyAuthorizer,
-      authorizationType: apigw.AuthorizationType.COGNITO,
-    });
-
     const applicantAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'ApplicantAuthorizer', {
       cognitoUserPools: [
         cognito.UserPool.fromUserPoolId(this, 'Applicant', 'us-east-2_87wvNq12q') 
@@ -265,6 +275,22 @@ export class ApplicationStack extends cdk.Stack {
 
     applicantResource.addMethod('GET', new apigw.LambdaIntegration(reviewApplicantProfile_fn), {
       authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //ADD ADMIN API
+    const adminAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'AdminAuthorizer', {
+      cognitoUserPools: [
+        cognito.UserPool.fromUserPoolId(this, 'Admin', 'us-east-2_7DlFFulPZ') 
+      ]
+    });
+
+    const adminResource = api.root.addResource('admin');
+
+     //CREATE JOB API
+    const createJobResource = companyResource.addResource('create_job');
+    createJobResource.addMethod('POST', new apigw.LambdaIntegration(createJob_fn), {
+      authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
@@ -309,5 +335,14 @@ export class ApplicationStack extends cdk.Stack {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
+
+     //ADMIN COMPANY REPORT API
+    const adminCompanyReportResource = adminResource.addResource('company_report');
+    
+    adminCompanyReportResource.addMethod('GET', new apigw.LambdaIntegration(adminCompanyReport_fn), {
+      authorizer: adminAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
   }
 }
