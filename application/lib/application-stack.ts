@@ -191,6 +191,40 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'SEARCH JOBS BY COMPANY' FUNCTION
+    const searchJobsByCompany_fn = new lambdaNodejs.NodejsFunction(this, 'SearchJobsByCompanyFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'searchJobsByCompany.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'searchJobsByCompany')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    // 'SEARCH JOBS BY SKILL' FUNCTION
+    const searchJobsBySkill_fn = new lambdaNodejs.NodejsFunction(this, 'SearchJobsBySkillFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'searchJobsBySkill.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'searchJobsBySkill')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -248,7 +282,7 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
-      //EDIT COMPANY API
+    //EDIT COMPANY API
     const editCompanyResource = companyResource.addResource('edit_company');
     editCompanyResource.addMethod('POST', new apigw.LambdaIntegration(editCompanyProfile_fn), {
       authorizer: companyAuthorizer,
@@ -259,6 +293,20 @@ export class ApplicationStack extends cdk.Stack {
     const getJobByIdResource = companyResource.addResource('get_job_by_id');
     getJobByIdResource.addMethod('POST', new apigw.LambdaIntegration(getJobById_fn), {
       authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //SEARCH JOBS BY COMPANY API
+    const searchJobsByCompanyResource = companyResource.addResource('search_jobs_by_company');
+    searchJobsByCompanyResource.addMethod('POST', new apigw.LambdaIntegration(searchJobsByCompany_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //SEARCH JOBS BY SKILL API
+    const searchJobsBySkillResource = companyResource.addResource('search_jobs_by_skill');
+    searchJobsBySkillResource.addMethod('POST', new apigw.LambdaIntegration(searchJobsBySkill_fn), {
+      authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
   }
