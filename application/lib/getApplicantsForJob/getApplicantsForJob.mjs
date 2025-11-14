@@ -24,7 +24,10 @@ export const handler = async (event) => {
     let result
     try {
         const body = typeof event.body === "string" ? JSON.parse(event.body) : event
-        // Execute queries sequentially
+        const jobId = body.jobId
+        
+        const result1 = runQuery('SELECT t1.jobName, t2.jobSkill FROM Jobs AS t1 INNER JOIN JobSkills AS t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
+
         code = 200
     } catch (error) {
         console.error(error)
