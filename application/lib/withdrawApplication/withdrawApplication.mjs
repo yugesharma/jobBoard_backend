@@ -20,17 +20,17 @@ function runQuery(query, params) {
      });
 }
 
-function rateApplicant(appId, status) {
+function withdrawApplication(appId) {
      const query = `
-          UPDATE recruitMe.JobApplication SET status = ? WHERE jobAppId = ?;
+          UPDATE recruitMe.JobApplication SET withdrawn = '1' WHERE jobAppId = ?;
      `;
-     return runQuery(query, [status, appId]);
+     return runQuery(query, [appId]);
 }
 
 export const handler = async (event) => {
      let code = 200;
      let body;
-     console.log(event);
+     console.log('event is' ,event);
      try {          
           const appId = event.queryStringParameters?.appId 
            || (event.queryStringParameters ? event.queryStringParameters.appId : undefined)
@@ -39,7 +39,7 @@ export const handler = async (event) => {
           if (!appId) {
                throw new Error('Job application ID is required');
           }
-          body = await rateApplicant(appId, event.queryStringParameters.status);
+          body = await withdrawApplication(appId);
 
      } catch (e) {
           code = 400; 
@@ -55,7 +55,7 @@ export const handler = async (event) => {
           },
           body: JSON.stringify(body),
      };
-     console.log(body);
+     console.log('body is',body);
 
      return response;
 };
