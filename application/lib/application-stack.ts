@@ -259,6 +259,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'WITHDRAW APPLICATION' FUNCTION
+    const withdrawApplication_fn = new lambdaNodejs.NodejsFunction(this, 'WithdrawApplicationFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'withdrawApplication.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'withdrawApplication')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -328,6 +345,13 @@ export class ApplicationStack extends cdk.Stack {
     //RATE APPLICANT API
     const rateApplicantResource = applicantResource.addResource('rate_applicant');
     rateApplicantResource.addMethod('POST', new apigw.LambdaIntegration(rateApplicant_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //WITHDRAW APPLICATION API
+    const withdrawApplicationResource = applicantResource.addResource('withdraw_application');
+    withdrawApplicationResource.addMethod('POST', new apigw.LambdaIntegration(withdrawApplication_fn), {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
