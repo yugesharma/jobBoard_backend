@@ -8,9 +8,9 @@ var pool=mysql.createPool({
   database:process.env.RDS_DATABASE
 });
 
-let getApplicantsForJob = (jobId) => {
+let runQuery = (query, params) => {
     return new Promise((resolve, reject) => {
-        pool.query("", (error, rows) => {
+        pool.query(query, params, (error, rows) => {
             if (error) {
                 return reject(error)
             }
@@ -24,7 +24,7 @@ export const handler = async (event) => {
     let result
     try {
         const body = typeof event.body === "string" ? JSON.parse(event.body) : event
-        result = await getApplicantsForJob(body.jobId)
+        // Execute queries sequentially
         code = 200
     } catch (error) {
         console.error(error)
