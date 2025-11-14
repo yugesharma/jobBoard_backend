@@ -242,7 +242,24 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
-    
+    // 'RATE APPLICANT' FUNCTION
+    const rateApplicant_fn = new lambdaNodejs.NodejsFunction(this, 'RateApplicantFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'rateApplicant.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'rateApplicant')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
         allowOrigins: apigw.Cors.ALL_ORIGINS, 
@@ -304,6 +321,13 @@ export class ApplicationStack extends cdk.Stack {
     //EDIT APPLICANT API
     const editApplicantResource = applicantResource.addResource('edit_applicant');
     editApplicantResource.addMethod('POST', new apigw.LambdaIntegration(editApplicantProfile_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //RATE APPLICANT API
+    const rateApplicantResource = applicantResource.addResource('rate_applicant');
+    rateApplicantResource.addMethod('POST', new apigw.LambdaIntegration(rateApplicant_fn), {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
