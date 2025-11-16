@@ -57,7 +57,7 @@ export const handler=async (event)=> {
     const body = typeof event.body === 'string' ? JSON.parse(event.body) : event;
     const nameChangeSuccess = await updateJob(body.jobID, body.jobName)
     const deleteSkillsSuccess = await deleteSkills(body.jobID)
-    for (const skill of event.skills) {
+    for (const skill of body.skills) {
       const newJobSkill = await insertSkill(skill, body.jobID.toString())//how is it getting stored in the database if I have to call toString here?
     }
     code = 200
