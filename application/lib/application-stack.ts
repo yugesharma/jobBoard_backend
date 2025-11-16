@@ -276,6 +276,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'APPLY TO JOB' FUNCTION
+    const applyToJob_fn = new lambdaNodejs.NodejsFunction(this, 'ApplyToJobFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'applyToJob.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'applyToJob')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -389,6 +406,13 @@ export class ApplicationStack extends cdk.Stack {
     
     adminCompanyReportResource.addMethod('GET', new apigw.LambdaIntegration(adminCompanyReport_fn), {
       authorizer: adminAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //APPLY TO JOB API
+    const applyToJobResource = applicantResource.addResource('apply_to_job');
+    applyToJobResource.addMethod('POST', new apigw.LambdaIntegration(applyToJob_fn), {
+      authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
