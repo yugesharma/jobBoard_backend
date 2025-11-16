@@ -34,18 +34,20 @@ export const handler = async (event) => {
           
           const [inactiveJobs, activeJobs, closedJobs] = await Promise.all([
                runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isActive = 0 AND isClosed = 0',
+                    `SELECT j.jobId,j.jobName,j.isActive,j.isClosed,j.jobs_compId_FK, GROUP_CONCAT(js.jobSkill ORDER BY js.jobSkill SEPARATOR ', ') AS skillsNeeded FROM recruitMe.Jobs j LEFT JOIN recruitMe.JobSkills js ON j.jobId = js.jobSkill_jobId_FK WHERE j.jobs_compId_FK = ? AND isActive = 0 AND isClosed = 0 GROUP BY j.jobId;`,
                     [compId]
                ),
                runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isActive = 1',
+                    `SELECT j.jobId,j.jobName,j.isActive,j.isClosed,j.jobs_compId_FK,GROUP_CONCAT(js.jobSkill ORDER BY js.jobSkill SEPARATOR ', ') AS skillsNeeded FROM recruitMe.Jobs j LEFT JOIN recruitMe.JobSkills js ON j.jobId = js.jobSkill_jobId_FK WHERE j.jobs_compId_FK = ? AND isActive = 1 AND isClosed = 0 GROUP BY j.jobId;`,
                     [compId]
                ),
                runQuery(
-                    'SELECT * FROM recruitMe.Jobs WHERE jobs_compId_FK = ? AND isClosed = 1',
+                    `SELECT j.jobId,j.jobName,j.isActive,j.isClosed,j.jobs_compId_FK,GROUP_CONCAT(js.jobSkill ORDER BY js.jobSkill SEPARATOR ', ') AS skillsNeeded FROM recruitMe.Jobs j LEFT JOIN recruitMe.JobSkills js ON j.jobId = js.jobSkill_jobId_FK WHERE j.jobs_compId_FK = ? AND isActive = 0 AND isClosed = 1 GROUP BY j.jobId;`,
                     [compId]
                ),
           ]);
+
+
 
           
           body = {

@@ -11,7 +11,7 @@ var pool=mysql.createPool({
 //SEARCH BY SKILLS
 let getJobs = (skillSearchString) => {
   return new Promise((resolve, reject) => {
-    pool.query("SELECT Companies.compName, Jobs.jobId, Jobs.jobName, JSON_ARRAYAGG(JobSkills.jobSkill) AS jobSkills FROM ((Companies INNER JOIN Jobs ON Companies.compID = Jobs.jobs_compID_FK) INNER JOIN JobSkills ON Jobs.jobId = JobSkills.jobSkill_jobID_FK) WHERE Jobs.jobId in (SELECT jobSkill_jobID_FK FROM JobSkills WHERE jobSkill LIKE '%java%') GROUP BY Jobs.jobId;", [`%${skillSearchString}%`], (error, rows) => {
+    pool.query("SELECT Companies.compName, Jobs.jobId, Jobs.jobName, JSON_ARRAYAGG(JobSkills.jobSkill) AS jobSkills FROM ((Companies INNER JOIN Jobs ON Companies.compID = Jobs.jobs_compID_FK) INNER JOIN JobSkills ON Jobs.jobId = JobSkills.jobSkill_jobID_FK) WHERE Jobs.jobId in (SELECT jobSkill_jobID_FK FROM JobSkills WHERE jobSkill LIKE ?) GROUP BY Jobs.jobId;", [`%${skillSearchString}%`], (error, rows) => {
       if (error) {
         return reject(error);
       }

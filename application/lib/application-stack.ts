@@ -225,7 +225,58 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
-    
+    // 'ADMIN COMPANY REPORT' FUNCTION
+    const adminCompanyReport_fn = new lambdaNodejs.NodejsFunction(this, 'AdminCompanyReportFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'adminCompanyReport.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'adminCompanyReport')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    // 'RATE APPLICANT' FUNCTION
+    const rateApplicant_fn = new lambdaNodejs.NodejsFunction(this, 'RateApplicantFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'rateApplicant.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'rateApplicant')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    // 'WITHDRAW APPLICATION' FUNCTION
+    const withdrawApplication_fn = new lambdaNodejs.NodejsFunction(this, 'WithdrawApplicationFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'withdrawApplication.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'withdrawApplication')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
         allowOrigins: apigw.Cors.ALL_ORIGINS, 
@@ -248,13 +299,6 @@ export class ApplicationStack extends cdk.Stack {
     });
     
 
-    //CREATE JOB API
-    const createJobResource = companyResource.addResource('create_job');
-    createJobResource.addMethod('POST', new apigw.LambdaIntegration(createJob_fn), {
-      authorizer: companyAuthorizer,
-      authorizationType: apigw.AuthorizationType.COGNITO,
-    });
-
     const applicantAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'ApplicantAuthorizer', {
       cognitoUserPools: [
         cognito.UserPool.fromUserPoolId(this, 'Applicant', 'us-east-2_87wvNq12q') 
@@ -268,6 +312,22 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
+    //ADD ADMIN API
+    const adminAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'AdminAuthorizer', {
+      cognitoUserPools: [
+        cognito.UserPool.fromUserPoolId(this, 'Admin', 'us-east-2_7DlFFulPZ') 
+      ]
+    });
+
+    const adminResource = api.root.addResource('admin');
+
+     //CREATE JOB API
+    const createJobResource = companyResource.addResource('create_job');
+    createJobResource.addMethod('POST', new apigw.LambdaIntegration(createJob_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
     //EDIT JOB API
     const editJobResource = companyResource.addResource('edit_job');
     editJobResource.addMethod('POST', new apigw.LambdaIntegration(editJob_fn), {
@@ -278,6 +338,20 @@ export class ApplicationStack extends cdk.Stack {
     //EDIT APPLICANT API
     const editApplicantResource = applicantResource.addResource('edit_applicant');
     editApplicantResource.addMethod('POST', new apigw.LambdaIntegration(editApplicantProfile_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //RATE APPLICANT API
+    const rateApplicantResource = applicantResource.addResource('rate_applicant');
+    rateApplicantResource.addMethod('POST', new apigw.LambdaIntegration(rateApplicant_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //WITHDRAW APPLICATION API
+    const withdrawApplicationResource = applicantResource.addResource('withdraw_application');
+    withdrawApplicationResource.addMethod('POST', new apigw.LambdaIntegration(withdrawApplication_fn), {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
@@ -297,17 +371,26 @@ export class ApplicationStack extends cdk.Stack {
     });
 
     //SEARCH JOBS BY COMPANY API
-    const searchJobsByCompanyResource = companyResource.addResource('search_jobs_by_company');
+    const searchJobsByCompanyResource = applicantResource.addResource('search_jobs_by_company');
     searchJobsByCompanyResource.addMethod('POST', new apigw.LambdaIntegration(searchJobsByCompany_fn), {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
     //SEARCH JOBS BY SKILL API
-    const searchJobsBySkillResource = companyResource.addResource('search_jobs_by_skill');
+    const searchJobsBySkillResource = applicantResource.addResource('search_jobs_by_skill');
     searchJobsBySkillResource.addMethod('POST', new apigw.LambdaIntegration(searchJobsBySkill_fn), {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
+
+     //ADMIN COMPANY REPORT API
+    const adminCompanyReportResource = adminResource.addResource('company_report');
+    
+    adminCompanyReportResource.addMethod('GET', new apigw.LambdaIntegration(adminCompanyReport_fn), {
+      authorizer: adminAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
   }
 }
