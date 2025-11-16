@@ -26,9 +26,23 @@ export const handler = async (event) => {
         const body = typeof event.body === "string" ? JSON.parse(event.body) : event
         const jobId = body.jobId
         
-        const result1 = runQuery('SELECT t1.jobName, t2.jobSkill FROM Jobs AS t1 INNER JOIN JobSkills AS t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
+        const jobInfo = runQuery('SELECT t1.jobName, t2.jobSkills FROM Jobs AS t1 JOIN JobSkills AS t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
 
-        const result2 = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 INNER JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK INNER JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK INNER JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['waitList', jobId])
+        const waitlistedApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['waitList', jobId])
+
+        const hirableApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['hirable', jobId])
+
+        const unacceptableApplicants = runQUery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['unacceptable', jobId])
+
+        const offeredApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.offered = 1 AND t1.jobId = ?', [jobId])
+
+        const hiredApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.hired = 1 AND t1.jobId = ?', [jobId])
+
+        const rejectedByApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.rejectedByApplicant = 1 AND t1.jobId = ?', [jobId])
+
+        const reviewJobPage = {
+             
+        }
 
         code = 200
     } catch (error) {
