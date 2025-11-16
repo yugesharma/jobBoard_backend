@@ -276,11 +276,19 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+<<<<<<< HEAD
     // 'APPLY TO JOB' FUNCTION
     const applyToJob_fn = new lambdaNodejs.NodejsFunction(this, 'ApplyToJobFunction', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'applyToJob.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, 'applyToJob')), 
+=======
+    // 'UPDATE JOB STATUS' FUNCTION
+    const updateJobStatus_fn = new lambdaNodejs.NodejsFunction(this, 'UpdateJobStatusFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X, 
+      handler: 'updateJobStatus.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'updateJobStatus')), 
+>>>>>>> c4f6cde (feat: add updateJobStatus lambda and endpoint)
       environment: {
         RDS_USER: process.env.RDS_USER!,
         RDS_PASSWORD: process.env.RDS_PASSWORD!,
@@ -291,7 +299,12 @@ export class ApplicationStack extends cdk.Stack {
       vpc: vpc,     
       securityGroups: [securityGroup],
       timeout: Duration.seconds(10), 
+<<<<<<< HEAD
     })
+=======
+    });
+
+>>>>>>> c4f6cde (feat: add updateJobStatus lambda and endpoint)
 
     // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
@@ -416,5 +429,12 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
+    //UPDATE JOB STATUS API
+    const updateJobStatusResource = companyResource.addResource('update_job_status');
+    updateJobStatusResource.addMethod('PUT', new apigw.LambdaIntegration(updateJobStatus_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+    
   }
 }
