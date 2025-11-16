@@ -20,19 +20,33 @@ let runQuery = (query, params) => {
 }
 
 export const handler = async (event) => {
-    let code
+    let code = 200
     let result
+
     try {
         const body = typeof event.body === "string" ? JSON.parse(event.body) : event
         const jobId = body.jobId
+
+        if(!jobId) {
+            throw new Error('Job ID is required');
+        }
+
+        const formatApplicants = (apps) => {
+               return apps.map(app => ({
+                    ...app,
+                    skillsNeeded: app.skillsNeeded ? app.skillsNeeded.split(',') : []
+               }));
+        }
         
-        const jobInfo = runQuery('SELECT t1.jobName, t2.jobSkills FROM Jobs AS t1 JOIN JobSkills AS t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
+        const jobName = runQuery('SELECT jobName FROM Jobs WHERE t1.jobId = ?', [jobId])
+
+        const jobSkills = runQuery('SELECT t2.jobSkill FROM Jobs t1 LEFT JOIN JobSkills t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
 
         const waitlistedApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['waitList', jobId])
 
         const hirableApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['hirable', jobId])
 
-        const unacceptableApplicants = runQUery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['unacceptable', jobId])
+        const unacceptableApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['unacceptable', jobId])
 
         const offeredApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.offered = 1 AND t1.jobId = ?', [jobId])
 
@@ -40,11 +54,20 @@ export const handler = async (event) => {
 
         const rejectedByApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.rejectedByApplicant = 1 AND t1.jobId = ?', [jobId])
 
+        const skillsArray = jobSkills.map((skill) => skill.jobSkill)
+
         const reviewJobPage = {
-             
+             jobName: jobName[0],
+             skills: skillsArray,
+             waitlistedApplicants: formatApplicants(waitlistedApplicants),
+             hirableApplicants: formatApplicants(hirableApplicants),
+             unacceptableApplicants: formatApplicants(unacceptableApplicants),
+             offeredApplicants: formatApplicants(offeredApplicants),
+             hiredApplicants: formatApplicants(hiredApplicants),
+             rejectedByAPplicants: formatApplicants(rejectedByApplicants)
         }
 
-        code = 200
+        result = reviewJobPage
     } catch (error) {
         console.error(error)
         result = error.message
@@ -61,6 +84,7 @@ export const handler = async (event) => {
         },
         body: JSON.stringify(result),
     }
+    console.log(result)
     
     return response
 }
