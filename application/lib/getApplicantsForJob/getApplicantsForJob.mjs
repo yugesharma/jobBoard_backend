@@ -23,6 +23,8 @@ export const handler = async (event) => {
     let code = 200
     let result
 
+    console.log(event)
+
     try {
         const body = typeof event.body === "string" ? JSON.parse(event.body) : event
         const jobId = body.jobId
@@ -38,7 +40,7 @@ export const handler = async (event) => {
                }));
         }
         
-        const jobName = runQuery('SELECT jobName FROM Jobs WHERE t1.jobId = ?', [jobId])
+        const jobName = runQuery('SELECT jobName FROM Jobs WHERE jobId = ?', [jobId])
 
         const jobSkills = runQuery('SELECT t2.jobSkill FROM Jobs t1 LEFT JOIN JobSkills t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
 
