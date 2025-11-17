@@ -293,6 +293,25 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'UPDATE JOB STATUS' FUNCTION
+    const updateJobStatus_fn = new lambdaNodejs.NodejsFunction(this, 'UpdateJobStatusFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X, 
+      handler: 'updateJobStatus.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'updateJobStatus')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+    // NOTE: The extra '});' from the merge conflict has been removed.
+
+
     // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -416,5 +435,12 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
+    //UPDATE JOB STATUS API
+    const updateJobStatusResource = companyResource.addResource('update_job_status');
+    updateJobStatusResource.addMethod('PUT', new apigw.LambdaIntegration(updateJobStatus_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+    
   }
 }
