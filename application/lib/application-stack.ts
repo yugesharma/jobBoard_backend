@@ -293,6 +293,22 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    const getApplicantsForJob_fn = new lambdaNodejs.NodejsFunction(this, 'GetApplicantsForJobFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'getApplicantsForJob.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'getApplicantsForJob')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // 'UPDATE JOB STATUS' FUNCTION
     const updateJobStatus_fn = new lambdaNodejs.NodejsFunction(this, 'UpdateJobStatusFunction', {
       runtime: lambda.Runtime.NODEJS_22_X, 
@@ -402,6 +418,12 @@ export class ApplicationStack extends cdk.Stack {
     //GET JOB BY ID API
     const getJobByIdResource = companyResource.addResource('get_job_by_id');
     getJobByIdResource.addMethod('POST', new apigw.LambdaIntegration(getJobById_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    const getApplicantsForJobResource = companyResource.addResource('get_applicants_for_job');
+    getApplicantsForJobResource.addMethod('POST', new apigw.LambdaIntegration(getApplicantsForJob_fn), {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
