@@ -8,13 +8,13 @@ var pool=mysql.createPool({
   database:process.env.RDS_DATABASE
 });
 
-let runQuery = (query, params) => {
+function runQuery(query, params) {
     return new Promise((resolve, reject) => {
         pool.query(query, params, (error, rows) => {
             if (error) {
                 return reject(error)
             }
-            return resolve(error)
+            return resolve(rows)
         })
     })
 }
@@ -23,50 +23,43 @@ export const handler = async (event) => {
     let code = 200
     let result
 
-    console.log(event)
-
     try {
         const body = typeof event.body === "string" ? JSON.parse(event.body) : event
         const jobId = body.jobId
 
         if(!jobId) {
-            throw new Error('Job ID is required');
+            throw new Error('Job ID is required')
         }
 
-        const formatApplicants = (apps) => {
-               return apps.map(app => ({
-                    ...app,
-                    skillsNeeded: app.skillsNeeded ? app.skillsNeeded.split(',') : []
-               }));
-        }
+        const separator = ', '
         
-        const jobName = runQuery('SELECT jobName FROM Jobs WHERE jobId = ?', [jobId])
+        const jobName = await runQuery('SELECT jobName FROM Jobs WHERE jobId = ?', [jobId])
 
-        const jobSkills = runQuery('SELECT t2.jobSkill FROM Jobs t1 LEFT JOIN JobSkills t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
+        const jobSkills = await runQuery('SELECT t2.jobSkill FROM Jobs t1 LEFT JOIN JobSkills t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
 
-        const waitlistedApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['waitList', jobId])
+        const waitlistedApplicants = await runQuery('SELECT t3.appName, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ? GROUP BY t3.appId', [separator,'waitList', jobId])
 
-        const hirableApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['hirable', jobId])
+        const hirableApplicants = await runQuery('SELECT t3.appName, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ? GROUP BY t3.appId', [separator, 'hirable', jobId])
 
-        const unacceptableApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ?', ['unacceptable', jobId])
+        const unacceptableApplicants = await runQuery('SELECT t3.appName, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ? GROUP BY t3.appId', [separator, 'unacceptable', jobId])
 
-        const offeredApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.offered = 1 AND t1.jobId = ?', [jobId])
+        const offeredApplicants = await runQuery('SELECT t3.appName, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.offered = 1 AND t1.jobId = ? GROUP BY t3.appId', [separator, jobId])
 
-        const hiredApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.hired = 1 AND t1.jobId = ?', [jobId])
+        const hiredApplicants = await runQuery('SELECT t3.appName, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.hired = 1 AND t1.jobId = ? GROUP BY t3.appId', [separator, jobId])
 
-        const rejectedByApplicants = runQuery('SELECT t3.appName, t4.appSkill FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.rejectedByApplicant = 1 AND t1.jobId = ?', [jobId])
+        const rejectedByApplicants = await runQuery('SELECT t3.appName, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.rejectedByApplicant = 1 AND t1.jobId = ? GROUP BY t3.appId', [separator, jobId])
 
         const skillsArray = jobSkills.map((skill) => skill.jobSkill)
 
         const reviewJobPage = {
              jobName: jobName[0],
              skills: skillsArray,
-             waitlistedApplicants: formatApplicants(waitlistedApplicants),
-             hirableApplicants: formatApplicants(hirableApplicants),
-             unacceptableApplicants: formatApplicants(unacceptableApplicants),
-             offeredApplicants: formatApplicants(offeredApplicants),
-             hiredApplicants: formatApplicants(hiredApplicants),
-             rejectedByAPplicants: formatApplicants(rejectedByApplicants)
+             waitlistedApplicants: waitlistedApplicants,
+             hirableApplicants: hirableApplicants,
+             unacceptableApplicants: unacceptableApplicants,
+             offeredApplicants: offeredApplicants,
+             hiredApplicants: hiredApplicants,
+             rejectedByApplicants: rejectedByApplicants
         }
 
         result = reviewJobPage
