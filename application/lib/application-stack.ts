@@ -293,6 +293,7 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'GET APPLICANTS FOR JOB' FUNCTION
     const getApplicantsForJob_fn = new lambdaNodejs.NodejsFunction(this, 'GetApplicantsForJobFunction', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'getApplicantsForJob.handler',
@@ -327,6 +328,22 @@ export class ApplicationStack extends cdk.Stack {
     })
     // NOTE: The extra '});' from the merge conflict has been removed.
 
+    // 'EXTEND JOB OFFER' FUNCTION
+    const extendJobOffer_fn = new lambdaNodejs.NodejsFunction(this, 'ExtendJobOfferFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X, 
+      handler: 'extendJobOffer.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'extendJobOffer')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
 
     // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
@@ -422,8 +439,16 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
+    //GET APPLICANTS FOR JOB API
     const getApplicantsForJobResource = companyResource.addResource('get_applicants_for_job');
     getApplicantsForJobResource.addMethod('POST', new apigw.LambdaIntegration(getApplicantsForJob_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //EXTEND JOB OFFER API
+    const extendJobOfferResource = companyResource.addResource('extend_job_offer');
+    extendJobOfferResource.addMethod('POST', new apigw.LambdaIntegration(extendJobOffer_fn), {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
