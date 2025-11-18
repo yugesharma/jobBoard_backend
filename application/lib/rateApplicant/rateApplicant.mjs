@@ -30,14 +30,14 @@ function rateApplicant(appId, status) {
 export const handler = async (event) => {
      let code = 200;
      let body;
-     console.log(event);
      try {          
           const appId = event.appId 
            || JSON.parse(event.body || '{}').appId;
           if (!appId) {
                throw new Error('Job application ID is required');
           }
-          body = await rateApplicant(appId, event.status);
+          const status = JSON.parse(event.body || '{}').status;
+          body = await rateApplicant(appId, status);
 
      } catch (e) {
           code = 400; 
@@ -53,7 +53,6 @@ export const handler = async (event) => {
           },
           body: JSON.stringify(body),
      };
-     console.log(body);
 
      return response;
 };
