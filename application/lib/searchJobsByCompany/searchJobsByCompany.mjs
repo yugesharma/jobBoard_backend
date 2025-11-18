@@ -9,9 +9,9 @@ var pool=mysql.createPool({
 });
 
 
-let getJobs = (companySearchString) => {
+let getJobs = (companySearchString, applicantId) => {
   return new Promise((resolve, reject) => {
-    pool.query("SELECT Companies.compName, Jobs.jobId, Jobs.jobName, JSON_ARRAYAGG(JobSkills.jobSkill) AS jobSkills FROM ((Companies INNER JOIN Jobs ON Companies.compID = Jobs.jobs_compID_FK) INNER JOIN JobSkills ON Jobs.jobId = JobSkills.jobSkill_jobID_FK) WHERE Companies.compName LIKE ? GROUP BY Jobs.jobId;", [`%${companySearchString}%`], (error, rows) => {
+    pool.query("SELECT Companies.compName, Jobs.jobId, Jobs.jobName, JSON_ARRAYAGG(JobSkills.jobSkill) AS jobSkills, EXISTS (SELECT 1 FROM JobApplication WHERE JobApplication.jobApp_jobId_FK = Jobs.jobId AND JobApplication.jobApp_appId_FK = ?) AS alreadyApplied FROM ((Companies INNER JOIN Jobs ON Companies.compID = Jobs.jobs_compID_FK) INNER JOIN JobSkills ON Jobs.jobId = JobSkills.jobSkill_jobID_FK) WHERE Companies.compName LIKE ? AND Jobs.isActive = 1 GROUP BY Jobs.jobId;", [applicantId, `%${companySearchString}%`], (error, rows) => {
       if (error) {
         return reject(error);
       }
@@ -25,7 +25,7 @@ export const handler = async (event) => {
   let result
   try {
     const body = typeof event.body === 'string' ? JSON.parse(event.body) : event;
-    result = await getJobs(body.companySearchString)
+    result = await getJobs(body.companySearchString, body.applicantId)
     code = 200
   } catch (error) {
     console.error(error)
