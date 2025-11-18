@@ -36,17 +36,18 @@ export const handler = async (event) => {
         throw new Error('App ID is required')
     }
 
-    const jobAppId = await runQuery('SELECT jobAppId FROM JobApplication WHERE jobApp_jobId_FK = ? AND jobApp_appId_FK = ?', [jobId, appId])
+    const jobApp = await runQuery('SELECT jobAppId FROM JobApplication WHERE jobApp_jobId_FK = ? AND jobApp_appId_FK = ?', [jobId, appId])
 
-    const jobAppInfo = await runQuery('UPDATE JobApplication SET offered = 1 WHERE jobAppId = ?', [jobAppId])
+    const jobAppId = jobApp[0]['jobAppId']
+
+    const jobAppOffer = await runQuery('UPDATE JobApplication SET offered = 1 WHERE jobAppId = ?', [jobAppId])
 
     const offerDetails = {
         jobAppId: jobAppId,
-        jobAppInfo: jobAppInfo
+        jobAppOffer: jobAppOffer
     }
 
     result = offerDetails
-    console.log(result)
   } catch (error) {
     code = 400
     result = error.message
