@@ -32,14 +32,12 @@ export const handler = async (event) => {
      let body;
      console.log(event);
      try {          
-          const appId = event.queryStringParameters?.appId 
-           || (event.queryStringParameters ? event.queryStringParameters.appId : undefined)
-           || event.appId
+          const appId = event.appId 
            || JSON.parse(event.body || '{}').appId;
           if (!appId) {
                throw new Error('Job application ID is required');
           }
-          body = await rateApplicant(appId, event.queryStringParameters.status);
+          body = await rateApplicant(appId, event.status);
 
      } catch (e) {
           code = 400; 
