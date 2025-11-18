@@ -343,9 +343,9 @@ export class ApplicationStack extends cdk.Stack {
     });
 
     //RATE APPLICANT API
-    const rateApplicantResource = applicantResource.addResource('rate_applicant');
+    const rateApplicantResource = companyResource.addResource('rate_applicant');
     rateApplicantResource.addMethod('POST', new apigw.LambdaIntegration(rateApplicant_fn), {
-      authorizer: applicantAuthorizer,
+      authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
