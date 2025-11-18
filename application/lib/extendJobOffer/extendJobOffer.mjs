@@ -38,7 +38,7 @@ export const handler = async (event) => {
 
     const jobAppId = await runQuery('SELECT jobAppId FROM JobApplication WHERE jobApp_jobId_FK = ? AND jobApp_appId_FK = ?', [jobId, appId])
 
-    const jobAppInfo = runQuery('UPDATE JobApplication SET offered = 1 WHERE jobAppId = ?', [jobAppId])
+    const jobAppInfo = await runQuery('UPDATE JobApplication SET offered = 1 WHERE jobAppId = ?', [jobAppId])
 
     const offerDetails = {
         jobAppId: jobAppId,
@@ -46,6 +46,7 @@ export const handler = async (event) => {
     }
 
     result = offerDetails
+    console.log(result)
   } catch (error) {
     code = 400
     result = error.message
