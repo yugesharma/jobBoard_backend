@@ -20,54 +20,73 @@ function runQuery(query, params) {
      });
 }
 
+
 export const handler = async (event) => {
      let code = 200;
      let body;
 
      try {
           
-          const compId = event.queryStringParameters.compId;
-          if (!compId) {
-               throw new Error('Company ID is required');
+          const appId = event.queryStringParameters?.appId 
+           || (event.queryStringParameters ? event.queryStringParameters.appId : undefined)
+           || event.appId
+           || JSON.parse(event.body || '{}').appId;
+          if (!appId) {
+               throw new Error('Applicant ID is required');
           }
 
+         
+          const applicantDetails = await runQuery(
+               'SELECT * FROM recruitMe.Applicants WHERE appId = ?',
+               [appId]
+          );
+
+          if (!applicantDetails || applicantDetails.length === 0) {
+               throw new Error('No applicant found with that ID');
+          }
+
+          const applicant = applicantDetails[0];
           
-          const [inactiveJobs, activeJobs, closedJobs] = await Promise.all([
-               runQuery(
-                    `SELECT j.jobId,j.jobName,j.isActive,j.isClosed,j.jobs_compId_FK, GROUP_CONCAT(js.jobSkill ORDER BY js.jobSkill SEPARATOR ', ') AS skillsNeeded FROM recruitMe.Jobs j LEFT JOIN recruitMe.JobSkills js ON j.jobId = js.jobSkill_jobId_FK WHERE j.jobs_compId_FK = ? AND isActive = 0 AND isClosed = 0 GROUP BY j.jobId;`,
-                    [compId]
-               ),
-               runQuery(
-                    `SELECT j.jobId,j.jobName,j.isActive,j.isClosed,j.jobs_compId_FK,GROUP_CONCAT(js.jobSkill ORDER BY js.jobSkill SEPARATOR ', ') AS skillsNeeded FROM recruitMe.Jobs j LEFT JOIN recruitMe.JobSkills js ON j.jobId = js.jobSkill_jobId_FK WHERE j.jobs_compId_FK = ? AND isActive = 1 AND isClosed = 0 GROUP BY j.jobId;`,
-                    [compId]
-               ),
-               runQuery(
-                    `SELECT j.jobId,j.jobName,j.isActive,j.isClosed,j.jobs_compId_FK,GROUP_CONCAT(js.jobSkill ORDER BY js.jobSkill SEPARATOR ', ') AS skillsNeeded FROM recruitMe.Jobs j LEFT JOIN recruitMe.JobSkills js ON j.jobId = js.jobSkill_jobId_FK WHERE j.jobs_compId_FK = ? AND isActive = 0 AND isClosed = 1 GROUP BY j.jobId;`,
-                    [compId]
-               ),
-          ]);
-
-
-
+          const applicantSkills = await runQuery(
+               'SELECT s.appSkill FROM Applicants a LEFT JOIN ApplicantSkills s ON a.appId = s.appSkill_appId_FK WHERE a.appId = ?',
+               [appId]
+          );
+          const skillsArray = applicantSkills.map((skill) => skill.appSkill);
           
-          body = {
-               
-               inactiveJobs: inactiveJobs,
-               activeJobs: activeJobs,
-               closedJobs: closedJobs,
+
+
+          const formatJobs = (jobs) => {
+               return jobs.map(job => ({
+                    ...job,
+                    skillsNeeded: job.skillsNeeded ? job.skillsNeeded.split(',') : []
+               }));
+          }
+
+          const appliedJobs = await runQuery ('SELECT j.jobName, ja.jobAppId, js.jobSkill AS skills FROM JobApplication ja JOIN Jobs j ON ja.jobApp_jobId_FK = j.jobId JOIN JobSkills js  ON js.jobSkill_jobId_FK = j.jobId WHERE ja.jobApp_appId_FK = ? AND ja.offered = 0 AND ja.hired = 0 AND ja.rejectedByApplicant = 0 GROUP BY j.jobName;',[appId])
+          const offeredJobs=await runQuery('SELECT j.jobName, js.jobSkill, ja.jobAppId FROM JobApplication ja JOIN Jobs j ON ja.jobApp_jobId_FK = j.jobId JOIN JobSkills js ON js.jobSkill_jobId_FK = j.jobId WHERE ja.jobApp_appId_FK = ? AND ja.offered = 1;',[appId])
+          const rejectedJobs=await runQuery('SELECT j.jobName, js.jobSkill, ja.jobAppId FROM JobApplication ja JOIN Jobs j ON ja.jobApp_jobId_FK = j.jobId JOIN JobSkills js ON js.jobSkill_jobId_FK = j.jobId WHERE ja.jobApp_appId_FK = ? AND ja.rejectedByApplicant = 1;',[appId])
+          const acceptedJobs=await runQuery('SELECT j.jobName, js.jobSkill, ja.jobAppId FROM JobApplication ja JOIN Jobs j ON ja.jobApp_jobId_FK = j.jobId JOIN JobSkills js ON js.jobSkill_jobId_FK = j.jobId WHERE ja.jobApp_appId_FK = ? AND ja.hired = 1;',[appId])
+          const applicantProfile = {
+               appName: applicant.appName,
+               skills: skillsArray,
+               appliedJobs: formatJobs(appliedJobs),
+               offeredJobs: formatJobs(offeredJobs),
+               acceptedJobs: formatJobs(acceptedJobs),
+               rejectedJobs: formatJobs(rejectedJobs),
           };
+
+          body = applicantProfile;
      } catch (e) {
-          code = 400;
+          code = 400; 
           body = { error: e.message };
      }
 
-     
      const response = {
           statusCode: code,
           headers: {
-               'Access-Control-Allow-Origin': '*', 
-               'Access-Control-Allow-Headers': '*',
-               'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+               "Access-Control-Allow-Origin": "*",
+               "Access-Control-Allow-Headers": "Content-Type,Authorization",
+               "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
           },
           body: JSON.stringify(body),
      };
