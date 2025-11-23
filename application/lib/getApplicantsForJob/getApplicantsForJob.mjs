@@ -25,8 +25,12 @@ export const handler = async (event) => {
 
     try {
         const body = typeof event.body === "string" ? JSON.parse(event.body) : event
+        console.log(body)
         const jobId = body.jobId
-
+        const pageSize = body.pageSize || 5
+        const waitListOffset = body.offsets[0]
+        console.log(waitListOffset)
+        console.log(pageSize)
         if(!jobId) {
             throw new Error('Job ID is required')
         }
@@ -37,7 +41,7 @@ export const handler = async (event) => {
 
         const jobSkills = await runQuery('SELECT t2.jobSkill FROM Jobs t1 LEFT JOIN JobSkills t2 ON t1.jobId = t2.jobSkill_jobId_FK WHERE t1.jobId = ?', [jobId])
 
-        const waitlistedApplicants = await runQuery('SELECT t3.appName, t2.jobAppId, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ? GROUP BY t3.appId', [separator,'waitList', jobId])
+        const waitlistedApplicants = await runQuery('SELECT t3.appName, t2.jobAppId, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ? GROUP BY t3.appId ORDER BY t3.appId ASC LIMIT ? OFFSET ?', [separator,'waitList', jobId, pageSize, waitListOffset])
 
         const hirableApplicants = await runQuery('SELECT t3.appName, t2.jobAppId, group_concat(t4.appSkill SEPARATOR ?) AS app_skills FROM Jobs AS t1 JOIN JobApplication AS t2 ON t1.jobId = t2.jobApp_jobId_FK JOIN Applicants AS t3 ON t3.appId = t2.jobApp_appId_FK JOIN ApplicantSkills AS t4 ON t3.appId = t4.appSkill_appId_FK WHERE t2.status = ? AND t1.jobId = ? GROUP BY t3.appId', [separator, 'hirable', jobId])
 
