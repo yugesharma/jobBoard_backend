@@ -11,7 +11,7 @@ var pool=mysql.createPool({
 //SEARCH BY SKILLS
 let getJobs = (skillSearchString, applicantId, pageSize, offset) => {
   return new Promise((resolve, reject) => {
-    pool.query("SELECT Companies.compName, Jobs.jobId, Jobs.jobName, JSON_ARRAYAGG(JobSkills.jobSkill) AS jobSkills, EXISTS (SELECT 1 FROM JobApplication WHERE JobApplication.jobApp_jobId_FK = Jobs.jobId AND JobApplication.jobApp_appId_FK = ?) AS alreadyApplied FROM ((Companies INNER JOIN Jobs ON Companies.compID = Jobs.jobs_compID_FK) INNER JOIN JobSkills ON Jobs.jobId = JobSkills.jobSkill_jobID_FK) WHERE Jobs.jobId in (SELECT jobSkill_jobID_FK FROM JobSkills WHERE jobSkill LIKE ?) AND Jobs.isActive = 1 GROUP BY Jobs.jobId ORDER BY Jobs.jobName ASC LIMIT ? OFFSET ?;", [applicantId, `%${skillSearchString}%`, pageSize, offset], (error, rows) => {
+    pool.query("SELECT Companies.compName, Jobs.jobId, Jobs.jobName, JSON_ARRAYAGG(JobSkills.jobSkill) AS jobSkills, EXISTS (SELECT 1 FROM JobApplication WHERE JobApplication.jobApp_jobId_FK = Jobs.jobId AND JobApplication.jobApp_appId_FK = ? AND JobApplication.withdrawn = 0) AS alreadyApplied FROM ((Companies INNER JOIN Jobs ON Companies.compID = Jobs.jobs_compID_FK) INNER JOIN JobSkills ON Jobs.jobId = JobSkills.jobSkill_jobID_FK) WHERE Jobs.jobId in (SELECT jobSkill_jobID_FK FROM JobSkills WHERE jobSkill LIKE ?) AND Jobs.isActive = 1 GROUP BY Jobs.jobId ORDER BY Jobs.jobName ASC LIMIT ? OFFSET ?;", [applicantId, `%${skillSearchString}%`, pageSize, offset], (error, rows) => {
       if (error) {
         return reject(error);
       }
