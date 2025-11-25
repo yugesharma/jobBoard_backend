@@ -362,7 +362,7 @@ export class ApplicationStack extends cdk.Stack {
 
     const companyResource = api.root.addResource('company');
 
-    companyResource.addMethod('GET', new apigw.LambdaIntegration(reviewCompanyProfile_fn), {
+    companyResource.addMethod('POST', new apigw.LambdaIntegration(reviewCompanyProfile_fn), {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
