@@ -25,11 +25,20 @@ export const handler = async (event) => {
   
   try {
     const body = typeof event.body === 'string' ? JSON.parse(event.body) : event;
-    const jobAppId = body.appId
+    const jobId = body.jobId
+    const appId = body.appId
 
-    if(!jobAppId) {
+    if(!jobId) {
         throw new Error('Job ID is required')
     }
+
+    if(!appId) {
+        throw new Error('App ID is required')
+    }
+
+    const jobApp = await runQuery('SELECT jobAppId FROM JobApplication WHERE jobApp_jobId_FK = ? AND jobApp_appId_FK = ?', [jobId, appId])
+
+    const jobAppId = jobApp[0]['jobAppId']
 
     const jobAppOffer = await runQuery('UPDATE JobApplication SET offered = 1 WHERE jobAppId = ?', [jobAppId])
 
