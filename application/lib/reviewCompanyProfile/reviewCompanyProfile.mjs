@@ -49,7 +49,7 @@ export const handler = async (event) => {
                     [compId]
                ),
                runQuery(
-                    `SELECT j.jobId,j.jobName,j.isActive,j.isClosed,j.jobs_compId_FK,GROUP_CONCAT(js.jobSkill ORDER BY js.jobSkill SEPARATOR ', ') AS skillsNeeded FROM recruitMe.Jobs j LEFT JOIN recruitMe.JobSkills js ON j.jobId = js.jobSkill_jobId_FK WHERE j.jobs_compId_FK = ? AND isActive = 1 AND isClosed = 0 GROUP BY j.jobId  ORDER BY j.jobName ASC LIMIT ? OFFSET ?;`,
+                    `SELECT j.jobId,j.jobName,j.isActive,j.isClosed,j.jobs_compId_FK,GROUP_CONCAT(js.jobSkill ORDER BY js.jobSkill SEPARATOR ', ') AS skillsNeeded, (SELECT COUNT(jobApp_appId_FK) FROM recruitMe.JobApplication ja WHERE ja.jobApp_jobId_FK = j.jobId AND ja.withdrawn = 0) AS numApplied FROM recruitMe.Jobs j LEFT JOIN recruitMe.JobSkills js ON j.jobId = js.jobSkill_jobId_FK WHERE j.jobs_compId_FK = ? AND isActive = 1 AND isClosed = 0 GROUP BY j.jobId  ORDER BY j.jobName ASC LIMIT ? OFFSET ?;`,
                     [compId, pageSize, activeOffset]
                ),
                runQuery(
