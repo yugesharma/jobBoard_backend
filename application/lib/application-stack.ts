@@ -242,6 +242,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'ADMIN APPLICANT REPORT' FUNCTION
+    const adminApplicantReport_fn = new lambdaNodejs.NodejsFunction(this, 'AdminApplicantReportFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'adminApplicantReport.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'adminApplicantReport')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // 'RATE APPLICANT' FUNCTION
     const rateApplicant_fn = new lambdaNodejs.NodejsFunction(this, 'RateApplicantFunction', {
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -471,6 +488,14 @@ export class ApplicationStack extends cdk.Stack {
     const adminCompanyReportResource = adminResource.addResource('company_report');
     
     adminCompanyReportResource.addMethod('GET', new apigw.LambdaIntegration(adminCompanyReport_fn), {
+      authorizer: adminAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //ADMIN APPLICANT REPORT API
+    const adminApplicantReportResource = adminResource.addResource('applicant_report');
+    
+    adminApplicantReportResource.addMethod('GET', new apigw.LambdaIntegration(adminApplicantReport_fn), {
       authorizer: adminAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
