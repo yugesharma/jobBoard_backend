@@ -362,6 +362,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'WITHDRAW/RESCIND JOB OFFER' FUNCTION
+    const withdrawRescindJobOffer_fn = new lambdaNodejs.NodejsFunction(this, 'WithdrawRescindJobOfferFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X, 
+      handler: 'withdrawRescindJobOffer.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'withdrawRescindJobOffer')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // 'ACCEPT OFFER' FUNCTION
     const acceptJobOffer_fn = new lambdaNodejs.NodejsFunction(this, 'AcceptJobOfferFunction', {
       runtime: lambda.Runtime.NODEJS_22_X, 
@@ -500,6 +517,13 @@ export class ApplicationStack extends cdk.Stack {
     //EXTEND JOB OFFER API
     const extendJobOfferResource = companyResource.addResource('extend_job_offer');
     extendJobOfferResource.addMethod('POST', new apigw.LambdaIntegration(extendJobOffer_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //WITHDRAW/RESCIND JOB OFFER API
+    const withdrawRescindJobOfferResource = companyResource.addResource('withdraw_rescind_job_offer');
+    withdrawRescindJobOfferResource.addMethod('POST', new apigw.LambdaIntegration(withdrawRescindJobOffer_fn), {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
