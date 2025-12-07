@@ -362,6 +362,40 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'ACCEPT OFFER' FUNCTION
+    const acceptJobOffer_fn = new lambdaNodejs.NodejsFunction(this, 'AcceptJobOfferFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X, 
+      handler: 'acceptJobOffer.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'acceptJobOffer')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
+    // 'REJECT OFFER' FUNCTION
+    const rejectJobOffer_fn = new lambdaNodejs.NodejsFunction(this, 'RejectJobOfferFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X, 
+      handler: 'rejectJobOffer.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'rejectJobOffer')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -513,6 +547,19 @@ export class ApplicationStack extends cdk.Stack {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
-    
+
+    //ACCEPT OFFER API
+    const acceptJobOfferResource = applicantResource.addResource('accept_offer');
+    acceptJobOfferResource.addMethod('POST', new apigw.LambdaIntegration(acceptJobOffer_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //REJECT OFFER API
+    const rejectJobOfferResource = applicantResource.addResource('reject_offer');
+    rejectJobOfferResource.addMethod('POST', new apigw.LambdaIntegration(rejectJobOffer_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
   }
 }
