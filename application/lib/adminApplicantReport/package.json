@@ -1,0 +1,8 @@
+{
+    "name": "adminapplicantreport",
+    "version": "1.0.0",
+    "dependencies": {
+        "dotenv": "^17.2.3",
+        "mysql": "^2.18.1"
+    }
+}
