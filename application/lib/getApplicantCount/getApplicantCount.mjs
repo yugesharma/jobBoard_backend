@@ -11,7 +11,7 @@ var pool=mysql.createPool({
 //SEARCH BY SKILLS
 let getApplicantCount = (skillSet, length) => {
   return new Promise((resolve, reject) => {
-    pool.query("SELECT COUNT(*) OVER() AS matched_count, appSkill_appId_FK FROM ( SELECT appSkill_appId_FK FROM recruitMe.ApplicantSkills where appSkill in (?) GROUP BY appSkill_appId_FK HAVING COUNT(DISTINCT appSkill)>=?) as t;", [skillSet, length], (error, rows) => {
+    pool.query("SELECT COUNT(*) AS matched_count FROM ( SELECT appSkill_appId_FK FROM recruitMe.ApplicantSkills where appSkill in (?) GROUP BY appSkill_appId_FK HAVING COUNT(DISTINCT appSkill)>=?) as t;", [skillSet, length], (error, rows) => {
       if (error) {
         return reject(error);
       }
