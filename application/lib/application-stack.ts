@@ -379,6 +379,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'GET APPLICANT COUNT' FUNCTION
+    const getApplicantCount_fn = new lambdaNodejs.NodejsFunction(this, 'GetApplicantCountFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X, 
+      handler: 'getApplicantCount.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'getApplicantCount')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // 'ACCEPT OFFER' FUNCTION
     const acceptJobOffer_fn = new lambdaNodejs.NodejsFunction(this, 'AcceptJobOfferFunction', {
       runtime: lambda.Runtime.NODEJS_22_X, 
@@ -496,6 +513,13 @@ export class ApplicationStack extends cdk.Stack {
     //EDIT COMPANY API
     const editCompanyResource = companyResource.addResource('edit_company');
     editCompanyResource.addMethod('POST', new apigw.LambdaIntegration(editCompanyProfile_fn), {
+      authorizer: companyAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+    //GET APPLICANT COUNT API
+    const getApplicantCountResource = companyResource.addResource('get_applicant_count');
+    getApplicantCountResource.addMethod('POST', new apigw.LambdaIntegration(getApplicantCount_fn), {
       authorizer: companyAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
