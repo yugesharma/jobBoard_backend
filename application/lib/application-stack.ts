@@ -430,6 +430,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+     // 'ADD APPLICANT SKILLS' FUNCTION
+    const addApplicantSkills_fn = new lambdaNodejs.NodejsFunction(this, 'AddApplicantSkillsFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X, 
+      handler: 'addApplicantSkill.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'addApplicantSkill')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // API GATEWAY SETUP
     const api = new apigw.RestApi(this, 'RecruitMeApi', {
       defaultCorsPreflightOptions: {
@@ -492,6 +509,13 @@ export class ApplicationStack extends cdk.Stack {
     //EDIT APPLICANT API
     const editApplicantResource = applicantResource.addResource('edit_applicant');
     editApplicantResource.addMethod('POST', new apigw.LambdaIntegration(editApplicantProfile_fn), {
+      authorizer: applicantAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
+     //ADD APPLICANT SKILLS API
+    const addApplicantSkillsResource = applicantResource.addResource('add_applicant_skills');
+    addApplicantSkillsResource.addMethod('POST', new apigw.LambdaIntegration(addApplicantSkills_fn), {
       authorizer: applicantAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
