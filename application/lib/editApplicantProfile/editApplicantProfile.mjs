@@ -61,7 +61,7 @@ export const handler=async (event)=> {
       const newAppSkill = await insertSkill(skill, body.appID.toString())//how is it getting stored in the database if I have to call toString here?
     }
     code = 200
-    result={message:"Job edited successfully", appID:body.appID}
+    result={message:"Applicant profile edited successfully", appID:body.appID}
   } catch (error) {
     code = 400
     result = error.message
