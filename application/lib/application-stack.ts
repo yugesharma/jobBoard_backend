@@ -593,7 +593,7 @@ export class ApplicationStack extends cdk.Stack {
      //ADMIN COMPANY REPORT API
     const adminCompanyReportResource = adminResource.addResource('company_report');
     
-    adminCompanyReportResource.addMethod('GET', new apigw.LambdaIntegration(adminCompanyReport_fn), {
+    adminCompanyReportResource.addMethod('POST', new apigw.LambdaIntegration(adminCompanyReport_fn), {
       authorizer: adminAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
@@ -601,7 +601,7 @@ export class ApplicationStack extends cdk.Stack {
     //ADMIN APPLICANT REPORT API
     const adminApplicantReportResource = adminResource.addResource('applicant_report');
     
-    adminApplicantReportResource.addMethod('GET', new apigw.LambdaIntegration(adminApplicantReport_fn), {
+    adminApplicantReportResource.addMethod('POST', new apigw.LambdaIntegration(adminApplicantReport_fn), {
       authorizer: adminAuthorizer,
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
