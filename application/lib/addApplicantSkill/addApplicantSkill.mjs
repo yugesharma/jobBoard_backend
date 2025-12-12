@@ -33,14 +33,18 @@ export const handler = async (event) => {
   let result
   try {
     const body = typeof event.body === 'string' ? JSON.parse(event.body) : event;
-   
-    if (body.skillSet>0) {
+    result = await applicantSkillCount(body.appID)
+
+    if (body.skillSet.length >0) {
       for (const skill of body.skillSet) {
-      const newAppSkill = await insertSkill(skill, body.appID.toString())//how is it getting stored in the database if I have to call toString here?
+      const newAppSkill = await insertSkill(skill, body.appID.toString())
+      console.log(newAppSkill)
+      if (newAppSkill) {
+        result = newAppSkill
+      }
     }
     }
     console.log(body)
-    result = await applicantSkillCount(body.appID)
     code = 200
   } catch (error) {
     console.error(error)
