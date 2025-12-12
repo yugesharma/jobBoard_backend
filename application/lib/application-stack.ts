@@ -259,6 +259,23 @@ export class ApplicationStack extends cdk.Stack {
       timeout: Duration.seconds(10), 
     })
 
+    // 'ADMIN JOBS REPORT' FUNCTION
+    const adminReportJobs_fn = new lambdaNodejs.NodejsFunction(this, 'AdminReportJobsFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'adminReportJobs.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'adminReportJobs')), 
+      environment: {
+        RDS_USER: process.env.RDS_USER!,
+        RDS_PASSWORD: process.env.RDS_PASSWORD!,
+        RDS_DATABASE: process.env.RDS_DATABASE!,
+        RDS_HOST: process.env.RDS_HOST!
+      }, 
+      role: role,
+      vpc: vpc,     
+      securityGroups: [securityGroup],
+      timeout: Duration.seconds(10), 
+    })
+
     // 'RATE APPLICANT' FUNCTION
     const rateApplicant_fn = new lambdaNodejs.NodejsFunction(this, 'RateApplicantFunction', {
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -606,6 +623,14 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
+    // ADMIN JOBS REPORT API
+    const adminJobsReportResource = adminResource.addResource('jobs_report');
+    
+    adminJobsReportResource.addMethod('POST', new apigw.LambdaIntegration(adminReportJobs_fn), {
+      authorizer: adminAuthorizer,
+      authorizationType: apigw.AuthorizationType.COGNITO,
+    });
+
     //APPLY TO JOB API
     const applyToJobResource = applicantResource.addResource('apply_to_job');
     applyToJobResource.addMethod('POST', new apigw.LambdaIntegration(applyToJob_fn), {
@@ -613,6 +638,7 @@ export class ApplicationStack extends cdk.Stack {
       authorizationType: apigw.AuthorizationType.COGNITO,
     });
 
+    
     //UPDATE JOB STATUS API
     const updateJobStatusResource = companyResource.addResource('update_job_status');
     updateJobStatusResource.addMethod('PUT', new apigw.LambdaIntegration(updateJobStatus_fn), {
