@@ -4,9 +4,10 @@ RecruitMe is a full-stack recruitment platform where companies post jobs, applic
 
 The project is designed to showcase backend engineering with AWS serverless infrastructure, role-based authentication, and SQL-backed business workflows.
 
+The project is an extension of my group submission along with Laura Pellowski, Hengyu Liu and Matthew McAlarney for CS 509, Design of Software Systems
+
 ## Demo
 
-- Short product demo (recommended for portfolio): add your LinkedIn or website video link here
 - Live deployment: currently offline to control AWS cost
 
 ## Why this project stands out
@@ -111,16 +112,3 @@ npx cdk deploy
 - Static hosting target: Amazon S3 (+ optional CloudFront)
 - If CloudFront is enabled, invalidate cache after deploy
 
-## Portfolio Talking Points (Backend)
-
-- Serverless API decomposition across many independent Lambda handlers
-- Authorization boundaries by role at API Gateway level
-- Connection pooling and SQL query patterns for real workflows
-- Business-state handling for application lifecycle (apply, offer, accept/reject, withdraw)
-- Reporting endpoints using aggregation queries with pagination
-
-## Current Status
-
-- Product functionality is complete for portfolio demonstration
-- Primary showcase format is a short video demo (30 to 90 seconds)
-- Live hosting can be re-enabled when needed
