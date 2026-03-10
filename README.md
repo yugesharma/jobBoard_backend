@@ -8,7 +8,7 @@ The project is an extension of my group submission along with Laura Pellowski, H
 
 ## Demo
 
-[Live deployment](http://recruitmee.s3-website.us-east-2.amazonaws.com/)
+[Live deployment](https://d31tu8o9pnv3zq.cloudfront.net/)
 
 
 ## Why this project stands out
