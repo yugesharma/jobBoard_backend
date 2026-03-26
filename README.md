@@ -8,7 +8,8 @@ The project is an extension of my group submission along with Laura Pellowski, H
 
 ## Demo
 
-[Live deployment](http://recruitmee.s3-website.us-east-2.amazonaws.com/)
+Currently offline to control AWS Cost.
+[Demo video](https://drive.google.com/file/d/1z6iB63xNVI9VnAqHe9qSSONLe5MMDJ9v/view?usp=drive_link)
 
 
 ## Why this project stands out
